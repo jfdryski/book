@@ -28,7 +28,7 @@ TIME_SLOTS = {
 }
 
 # 教室配置
-CLASSROOMS = ["217", "211"]
+CLASSROOMS = ["207", "211"]
 
 # 屏蔽的教室文件
 BLOCKED_CLASSROOMS_FILE = "blocked_classrooms.json"
