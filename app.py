@@ -7,8 +7,8 @@ import os
 
 # 设置页面配置
 st.set_page_config(
-    page_title="活动室预约系统",
-    page_icon="🏢",
+    page_title="尖锋旱雪跳台包场预约系统",
+    page_icon="🎿 ",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -17,20 +17,23 @@ st.set_page_config(
 DATA_FILE = "bookings.json"
 
 # 管理员密码（在实际部署时应该使用环境变量或加密存储）
-ADMIN_PASSWORD = "1213456"
+ADMIN_PASSWORD = "kgw1998"
 
 # 时段定义
 TIME_SLOTS = {
     "上午第一节": "08:00-10:00",
     "上午第二节": "10:00-12:00",
-    "下午第一节": "14:00-16:00",
-    "下午第二节": "16:00-18:00"
+    "下午第一节": "12:00-14:00",
+    "下午第二节": "14:00-16:00",
+    "下午第三节": "16:00-18:00",
+    "晚上第一节": "18:00-20:00",
+    "晚上第二节": "20:00-22:00",
 }
 
-# 教室配置
-CLASSROOMS = ["207", "211"]
+# 跳台配置
+CLASSROOMS = ["6m", "8m","10m","14m"]
 
-# 屏蔽的教室文件
+# 屏蔽的跳台文件
 BLOCKED_CLASSROOMS_FILE = "blocked_classrooms.json"
 
 def load_bookings():
@@ -49,7 +52,7 @@ def save_bookings(bookings):
         json.dump(bookings, f, ensure_ascii=False, indent=2)
 
 def load_blocked_classrooms():
-    """加载被屏蔽的教室列表"""
+    """加载被屏蔽的跳台列表"""
     if os.path.exists(BLOCKED_CLASSROOMS_FILE):
         try:
             with open(BLOCKED_CLASSROOMS_FILE, 'r', encoding='utf-8') as f:
@@ -59,7 +62,7 @@ def load_blocked_classrooms():
     return []
 
 def save_blocked_classrooms(blocked_classrooms):
-    """保存被屏蔽的教室列表"""
+    """保存被屏蔽的跳台列表"""
     with open(BLOCKED_CLASSROOMS_FILE, 'w', encoding='utf-8') as f:
         json.dump(blocked_classrooms, f, ensure_ascii=False, indent=2)
 
@@ -80,28 +83,28 @@ def get_weekday_name(date):
     return weekdays[date.weekday()]
 
 def get_available_classrooms(bookings, date_str, time_slot):
-    """获取指定日期时段的可用教室"""
+    """获取指定日期时段的可用跳台"""
     blocked = load_blocked_classrooms()
     available = []
     for classroom in CLASSROOMS:
-        if classroom not in blocked:  # 排除被屏蔽的教室
+        if classroom not in blocked:  # 排除被屏蔽的跳台
             slot_key = f"{date_str}_{time_slot}_{classroom}"
             if slot_key not in bookings:
                 available.append(classroom)
     return available
 
 def is_slot_fully_booked(bookings, date_str, time_slot):
-    """检查指定时段是否完全被预约（所有可用教室都被预约）"""
+    """检查指定时段是否完全被预约（所有可用跳台都被预约）"""
     return len(get_available_classrooms(bookings, date_str, time_slot)) == 0
 
 def get_available_classrooms_for_booking():
-    """获取可用于预约的教室列表（排除被屏蔽的教室）"""
+    """获取可用于预约的跳台列表（排除被屏蔽的跳台）"""
     blocked = load_blocked_classrooms()
     return [classroom for classroom in CLASSROOMS if classroom not in blocked]
 
 def main():
-    st.title("🏢 活动室预约系统")
-    st.markdown("---")
+    st.title("🎿 JFdryski  尖锋旱雪跳台包场预约系统")
+    st.markdown("暂定一个星期，之后根据需要再进行调整")
     
     # 初始化 session state
     if 'selected_date_index' not in st.session_state:
@@ -143,27 +146,27 @@ def main():
         available_classrooms = get_available_classrooms(bookings, date_str, selected_slot)
         is_fully_booked = is_slot_fully_booked(bookings, date_str, selected_slot)
         
-        # 检查是否有教室被屏蔽
+        # 检查是否有跳台被屏蔽
         available_for_booking = get_available_classrooms_for_booking()
         
         if len(available_for_booking) == 0:
-            st.error("❌ 暂无可用教室")
+            st.error("❌ 暂无可用跳台")
         elif is_fully_booked:
-            st.error(f"❌ 该时段所有教室已被预约")
-            # 显示已预约的教室信息
+            st.error(f"❌ 该时段所有跳台已被预约")
+            # 显示已预约的跳台信息
             for classroom in available_for_booking:
                 slot_key = f"{date_str}_{selected_slot}_{classroom}"
                 if slot_key in bookings:
                     booking_info = bookings[slot_key]
-                    st.info(f"教室{classroom}：{booking_info['name']} ({booking_info.get('student_id', '未知')})")
+                    st.info(f"跳台{classroom}：{booking_info['name']} ({booking_info.get('student_id', '未知')})")
         else:
-            st.success(f"✅ 该时段有 {len(available_classrooms)} 个教室可预约")
+            st.success(f"✅ 该时段有 {len(available_classrooms)} 个跳台可预约")
         
-        # 教室选择
+        # 跳台选择
         selected_classroom = st.selectbox(
-            "选择教室",
+            "选择跳台",
             options=available_classrooms,
-            format_func=lambda x: f"教十A {x}"
+            format_func=lambda x: f"跳台 {x}"
         )
         
         # 预约表单
@@ -171,10 +174,10 @@ def main():
             st.subheader("填写预约信息")
             
             name = st.text_input("姓名 *", placeholder="请输入您的姓名")
-            student_id = st.text_input("学号 *", placeholder="请输入您的学号")
-            class_name = st.text_input("班级 *", placeholder="请输入您的班级")
+            student_id = st.text_input("身份证后四位号 *", placeholder="身份证后四位号")
+            class_name = st.text_input("单位/俱乐部 *", placeholder="单位/俱乐部名称")
             phone = st.text_input("电话 *", placeholder="请输入您的联系电话")
-            reason = st.text_area("预约原因 *", placeholder="请简述活动室使用目的")
+            reason = st.text_area("包场人数 *", placeholder="1-20人")
             
             submitted = st.form_submit_button("确认预约", type="primary")
             
@@ -183,10 +186,10 @@ def main():
                 if not all([name, student_id, class_name, phone, reason]):
                     st.error("请填写所有必填项！")
                 else:
-                    # 再次检查教室是否可用（防止并发预约）
+                    # 再次检查跳台是否可用（防止并发预约）
                     slot_key = f"{date_str}_{selected_slot}_{selected_classroom}"
                     if slot_key in bookings:
-                        st.error("抱歉，该教室刚刚被其他人预约了，请选择其他教室。")
+                        st.error("抱歉，该跳台刚刚被其他组织预约了，请选择其他跳台。")
                     else:
                         # 保存预约
                         booking_data = {
@@ -200,11 +203,11 @@ def main():
                         }
                         bookings[slot_key] = booking_data
                         save_bookings(bookings)
-                        st.success(f"✅ 预约成功！教室{selected_classroom}")
+                        st.success(f"✅ 预约成功！跳台{selected_classroom}")
                         st.rerun()
     
     # 主内容区域 - 日程表
-    st.header("📅 未来7天活动室日程表")
+    st.header("📅 未来7天跳台日程表")
     st.info(f"当前时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | 预约范围：{week_dates[0].strftime('%Y-%m-%d')} 至 {week_dates[-1].strftime('%Y-%m-%d')}")
     st.markdown("💡 **提示：点击日程表中的时段可快速跳转到预约**")
     
@@ -249,23 +252,23 @@ def main():
             date_str = date.strftime('%Y-%m-%d')
             
             with cols[date_idx + 1]:
-                # 检查该时段的教室预约情况
+                # 检查该时段的跳台预约情况
                 available_classrooms = get_available_classrooms(bookings, date_str, time_slot)
                 is_fully_booked = is_slot_fully_booked(bookings, date_str, time_slot)
                 available_for_booking = get_available_classrooms_for_booking()
                 
                 if len(available_for_booking) == 0:
-                    # 所有教室都被屏蔽
+                    # 所有跳台都被屏蔽
                     if st.button(
                         "🚫 暂无可用", 
                         key=f"btn_{date_idx}_{slot_idx}",
-                        help="暂无可用教室",
+                        help="暂无可用跳台",
                         use_container_width=True,
                         disabled=True
                     ):
                         pass
                 elif is_fully_booked:
-                    # 所有可用教室都被预约
+                    # 所有可用跳台都被预约
                     booked_info = []
                     for classroom in available_for_booking:
                         slot_key = f"{date_str}_{time_slot}_{classroom}"
@@ -289,8 +292,8 @@ def main():
                         st.rerun()
                         
                 elif len(available_classrooms) == len(available_for_booking):
-                    # 所有可用教室都可预约
-                    display_text = f"✅ 可预约\n({len(available_for_booking)}个教室)"
+                    # 所有可用跳台都可预约
+                    display_text = f"✅ 可预约\n({len(available_for_booking)}个跳台)"
                         
                     if st.button(
                         display_text, 
@@ -304,7 +307,7 @@ def main():
                         st.rerun()
                         
                 else:
-                    # 部分教室被预约
+                    # 部分跳台被预约
                     booked_info = []
                     for classroom in available_for_booking:
                         slot_key = f"{date_str}_{time_slot}_{classroom}"
@@ -320,7 +323,7 @@ def main():
                     if st.button(
                         display_text, 
                         key=f"btn_{date_idx}_{slot_idx}",
-                        help="点击预约剩余教室",
+                        help="点击预约剩余跳台",
                         use_container_width=True,
                         type="secondary"
                     ):
@@ -347,7 +350,7 @@ def main():
                 fully_available_slots += 1
     
     with col1:
-        st.metric("总教室时段数", total_slots, help=f"基于{available_classroom_count}个可用教室")
+        st.metric("总跳台本周时段数", total_slots, help=f"基于{available_classroom_count}个可用跳台")
     
     with col2:
         st.metric("已预约", booked_slots)
@@ -379,12 +382,12 @@ def main():
             record = {
                 "日期": date_str,
                 "时段": time_slot,
-                "教室": classroom,
+                "跳台": classroom,
                 "姓名": booking['name'],
-                "学号": booking.get('student_id', '未填写'),
-                "班级": booking['class'],
+                "身份证后4位号": booking.get('student_id', '未填写'),
+                "俱乐部": booking['class'],
                 "电话": booking['phone'],
-                "预约原因": booking['reason'],
+                "包场人数": booking['reason'],
                 "预约时间": booking['booking_time']
             }
             records.append(record)
@@ -403,7 +406,7 @@ def main():
             st.success("✅ 密码验证成功")
             
             # 创建管理选项卡
-            tab1, tab2, tab3 = st.tabs(["📋 预约管理", "🏫 教室管理", "📊 统计信息"])
+            tab1, tab2, tab3 = st.tabs(["📋 预约管理", "🏫 跳台管理", "📊 统计信息"])
             
             with tab1:
                 # 删除指定预约
@@ -423,7 +426,7 @@ def main():
                             time_slot = '_'.join(parts[1:])
                             classroom = booking.get('classroom', '未知')
                             
-                        option_text = f"{date_str} {time_slot} 教室{classroom} - {booking['name']}"
+                        option_text = f"{date_str} {time_slot} 跳台{classroom} - {booking['name']}"
                         if 'student_id' in booking:
                             option_text += f" ({booking['student_id']})"
                         option_text += f" - {booking['class']}"
@@ -477,67 +480,67 @@ def main():
                     st.info("暂无预约记录可清空")
             
             with tab2:
-                st.subheader("🏫 教室管理")
+                st.subheader("🏫 跳台管理")
                 
                 blocked_classrooms = load_blocked_classrooms()
                 
                 # 显示当前状态
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.write("**可用教室：**")
+                    st.write("**可用跳台：**")
                     available_classrooms = [c for c in CLASSROOMS if c not in blocked_classrooms]
                     if available_classrooms:
                         for classroom in available_classrooms:
-                            st.success(f"✅ 教室 {classroom}")
+                            st.success(f"✅ 跳台 {classroom}")
                     else:
-                        st.error("❌ 没有可用教室")
+                        st.error("❌ 没有可用跳台")
                 
                 with col2:
-                    st.write("**已屏蔽教室：**")
+                    st.write("**已屏蔽跳台：**")
                     if blocked_classrooms:
                         for classroom in blocked_classrooms:
-                            st.error(f"🚫 教室 {classroom}")
+                            st.error(f"🚫 跳台 {classroom}")
                     else:
-                        st.info("没有屏蔽的教室")
+                        st.info("没有屏蔽的跳台")
                 
                 st.markdown("---")
                 
-                # 屏蔽教室
-                st.subheader("🚫 屏蔽教室")
+                # 屏蔽跳台
+                st.subheader("🚫 屏蔽跳台")
                 available_to_block = [c for c in CLASSROOMS if c not in blocked_classrooms]
                 if available_to_block:
                     classroom_to_block = st.selectbox(
-                        "选择要屏蔽的教室",
+                        "选择要屏蔽的跳台",
                         options=available_to_block,
-                        format_func=lambda x: f"教室 {x}",
+                        format_func=lambda x: f"跳台 {x}",
                         key="block_select"
                     )
                     
-                    if st.button(f"🚫 屏蔽教室 {classroom_to_block}", type="secondary", key="block_classroom"):
+                    if st.button(f"🚫 屏蔽跳台 {classroom_to_block}", type="secondary", key="block_classroom"):
                         blocked_classrooms.append(classroom_to_block)
                         save_blocked_classrooms(blocked_classrooms)
-                        st.success(f"✅ 教室 {classroom_to_block} 已被屏蔽")
+                        st.success(f"✅ 跳台 {classroom_to_block} 已被屏蔽")
                         st.rerun()
                 else:
-                    st.info("所有教室都已被屏蔽")
+                    st.info("所有跳台都已被屏蔽")
                 
-                # 启用教室
-                st.subheader("✅ 启用教室")
+                # 启用跳台
+                st.subheader("✅ 启用跳台")
                 if blocked_classrooms:
                     classroom_to_unblock = st.selectbox(
-                        "选择要启用的教室",
+                        "选择要启用的跳台",
                         options=blocked_classrooms,
-                        format_func=lambda x: f"教室 {x}",
+                        format_func=lambda x: f"跳台 {x}",
                         key="unblock_select"
                     )
                     
-                    if st.button(f"✅ 启用教室 {classroom_to_unblock}", type="primary", key="unblock_classroom"):
+                    if st.button(f"✅ 启用跳台 {classroom_to_unblock}", type="primary", key="unblock_classroom"):
                         blocked_classrooms.remove(classroom_to_unblock)
                         save_blocked_classrooms(blocked_classrooms)
-                        st.success(f"✅ 教室 {classroom_to_unblock} 已恢复可用")
+                        st.success(f"✅ 跳台 {classroom_to_unblock} 已恢复可用")
                         st.rerun()
                 else:
-                    st.info("没有被屏蔽的教室")
+                    st.info("没有被屏蔽的跳台")
                 
                 # 批量操作
                 st.markdown("---")
@@ -545,15 +548,15 @@ def main():
                 
                 col1, col2 = st.columns(2)
                 with col1:
-                    if st.button("🚫 屏蔽所有教室", type="secondary", key="block_all"):
+                    if st.button("🚫 屏蔽所有跳台", type="secondary", key="block_all"):
                         if st.session_state.get('confirm_block_all', False):
                             save_blocked_classrooms(CLASSROOMS.copy())
-                            st.success("✅ 所有教室已被屏蔽")
+                            st.success("✅ 所有跳台已被屏蔽")
                             st.session_state.confirm_block_all = False
                             st.rerun()
                         else:
                             st.session_state.confirm_block_all = True
-                            st.warning("⚠️ 请再次点击确认屏蔽所有教室")
+                            st.warning("⚠️ 请再次点击确认屏蔽所有跳台")
                     
                     if st.session_state.get('confirm_block_all', False):
                         if st.button("❌ 取消", key="cancel_block_all"):
@@ -561,16 +564,16 @@ def main():
                             st.info("已取消操作")
                 
                 with col2:
-                    if st.button("✅ 启用所有教室", type="primary", key="unblock_all"):
+                    if st.button("✅ 启用所有跳台", type="primary", key="unblock_all"):
                         save_blocked_classrooms([])
-                        st.success("✅ 所有教室已恢复可用")
+                        st.success("✅ 所有跳台已恢复可用")
                         st.rerun()
             
             with tab3:
                 st.subheader("📊 详细统计信息")
                 
-                # 按教室统计
-                st.write("**各教室预约情况：**")
+                # 按跳台统计
+                st.write("**各跳台预约情况：**")
                 classroom_stats = {}
                 for classroom in CLASSROOMS:
                     classroom_bookings = [k for k in bookings.keys() if k.endswith(f"_{classroom}")]
@@ -578,7 +581,7 @@ def main():
                 
                 for classroom, count in classroom_stats.items():
                     status = "🚫 已屏蔽" if classroom in blocked_classrooms else "✅ 可用"
-                    st.write(f"教室 {classroom}: {count} 个预约 ({status})")
+                    st.write(f"跳台 {classroom}: {count} 个预约 ({status})")
                 
                 # 按日期统计
                 st.write("**各日期预约情况：**")
